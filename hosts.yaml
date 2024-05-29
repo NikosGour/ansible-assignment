@@ -1,0 +1,25 @@
+---
+azure_hosts:
+    hosts:
+        jenkins:
+            ansible_host: azure-jenkins-vm
+        backend:
+            ansible_host: azure-backend-vm
+        frontend:
+            ansible_host: azure-frontend-vm
+
+jenkins_hosts:
+    hosts:
+        jenkins_1:
+            ansible_host: azure-jenkins-vm
+
+backend_hosts:
+    hosts:
+        backend_1:
+            ansible_host: azure-backend-vm
+
+frontend_hosts:
+    hosts:
+        frontend_1:
+            ansible_host: azure-frontend-vm
+
