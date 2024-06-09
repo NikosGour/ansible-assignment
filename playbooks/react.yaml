@@ -1,0 +1,86 @@
+---
+- hosts: frontend_hosts
+  become: no
+  pre_tasks:
+      - name: "Copy ssh key"
+        ansible.builtin.copy:
+            src: "~/.ssh/id_distributed_systems_rsa"
+            dest: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+        become: no
+
+      - name: "Set permissions"
+        ansible.builtin.file:
+            path: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+            mode: "0600"
+        become: no
+
+      - name: "Install Nodejs"
+        apt:
+            name: nodejs
+            state: present
+            update_cache: yes
+        become: yes
+        become_user: root
+
+      - name: "Install npm"
+        apt:
+            name: npm
+            state: present
+            update_cache: yes
+        become: yes
+        become_user: root
+
+  tasks:
+      - name: "Clone repo"
+        ansible.builtin.git:
+            repo: "git@github.com:NikosGour/DistributedSystemsFrontEnd.git"
+            dest: "{{ app.dir }}"
+            version: main
+            force: yes
+            accept_hostkey: yes
+            key_file: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+        become: no
+
+      - name: "Install dependencies"
+        command: "npm install"
+        args:
+            chdir: "{{ app.dir }}"
+        become: no
+
+      - name: "Insert backend IP"
+        ansible.builtin.lineinfile:
+            path: "{{app.dir}}/.env"
+            regexp: "^REACT_APP_BACKEND_IP="
+            line: "REACT_APP_BACKEND_IP=http://{{backend.ip}}:{{backend.port}}"
+            state: present
+
+      # - name: "Build"
+      #   command: "npm run build"
+      #   args:
+      #       chdir: "{{ app.dir }}"
+      #   become: no
+
+      - name: "React app service"
+        ansible.builtin.template:
+            src: "../templates/react.service.j2"
+            dest: "/etc/systemd/system/react_app.service"
+        become: yes
+        become_user: root
+        notify:
+            - restart react_app
+
+      - name: "React app service started"
+        ansible.builtin.service:
+            name: react_app
+            state: started
+            enabled: yes
+        become: yes
+
+  handlers:
+      - name: restart react_app
+        ansible.builtin.service:
+            name: react_app
+            state: restarted
+            enabled: yes
+        become: yes
+

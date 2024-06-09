@@ -1,0 +1,7 @@
+---
+- hosts: frontend_hosts backend_hosts
+  tasks:
+      - name: Ping All Servers
+        action: ping
+      - debug: msg="Success"
+

@@ -1,0 +1,76 @@
+---
+- hosts: backend_hosts
+  become: no
+  pre_tasks:
+      - name: Copy ssh key
+        ansible.builtin.copy:
+            src: "~/.ssh/id_distributed_systems_rsa"
+            dest: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+        become: no
+
+      - name: Set permissions
+        ansible.builtin.file:
+            path: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+            mode: "0600"
+        become: no
+
+      - name: Install Java
+        apt:
+            name: openjdk-17-jdk
+            state: present
+            update_cache: yes
+        become: yes
+        become_user: root
+
+  tasks:
+      - name: "Clone repo"
+        ansible.builtin.git:
+            repo: "git@github.com:NikosGour/DistributedSystems.git"
+            dest: "{{ app.dir }}"
+            version: main
+            force: yes
+            accept_hostkey: yes
+            key_file: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+        become: no
+      - name: "Fill application.properties"
+        lineinfile:
+            dest: "{{ app.dir }}/src/main/resources/application.properties"
+            state: present
+            regexp: "^{{item.key}}="
+            line: "{{item.key}}={{item.value}}"
+        with_items:
+            - "{{app.env | dict2items}}"
+
+      - name: "Make .mvnw executable"
+        file:
+            path: "{{ app.dir }}/mvnw"
+            mode: "u+x"
+
+      - name: "Run .mvnw"
+        command: "./mvnw package -Dmaven.test.skip "
+        args:
+            chdir: "{{ app.dir }}"
+
+      - name: "Spring service"
+        ansible.builtin.template:
+            src: "../templates/spring.service.j2"
+            dest: "/etc/systemd/system/spring.service"
+        become: yes
+        become_user: root
+        notify:
+            - restart spring
+
+      - name: "Spring service started"
+        ansible.builtin.service:
+            name: spring
+            state: started
+            enabled: yes
+        become: yes
+
+  handlers:
+      - name: restart spring
+        service:
+            name: spring
+            state: restarted
+        become: yes
+

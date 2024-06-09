@@ -1,1 +1,5 @@
 ansible_python_interpreter: /usr/bin/python3
+backend:
+    ip: 4.233.222.62
+    port: 7979
+

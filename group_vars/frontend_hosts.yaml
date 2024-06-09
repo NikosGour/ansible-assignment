@@ -1,0 +1,4 @@
+app:
+    dir: "{{ ansible_user_dir }}/DistributedSystemsFrontend"
+    cmd: "npm start"
+

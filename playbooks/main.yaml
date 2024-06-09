@@ -1,0 +1,10 @@
+---
+- name: "Ping all"
+  ansible.builtin.import_playbook: ping.yaml
+- name: "Deploy Database"
+  ansible.builtin.import_playbook: mysql.yaml
+- name: "Deploy Backend"
+  ansible.builtin.import_playbook: spring.yaml
+- name: "Deploy Frontend"
+  ansible.builtin.import_playbook: react.yaml
+

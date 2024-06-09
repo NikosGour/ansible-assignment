@@ -1,0 +1,8 @@
+[Unit]
+After=network.target
+
+[Service]
+User={{ansible_user_id}}
+Group={{ansible_user_gid}}
+WorkingDirectory={{app.dir}}
+ExecStart={{app.cmd}}
