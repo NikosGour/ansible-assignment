@@ -1,0 +1,7 @@
+---
+- hosts: backend_hosts
+  become: yes
+  become_user: root
+  roles:
+  - role: geerlingguy.mysql
+    become: yes
