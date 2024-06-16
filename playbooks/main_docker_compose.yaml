@@ -1,0 +1,18 @@
+---
+- hosts: backend_hosts
+  become: yes
+  pre_tasks:
+    
+    - name: Check if Docker is installed
+      shell: docker --version && docker compose version
+      register: docker_version_result
+      ignore_errors: true
+
+    - name: Set Docker installed fact
+      set_fact:
+        docker_installed: "{{ docker_version_result.rc == 0 }}"
+
+    - name: if Docker is not installed, install it
+      include_tasks: install_docker.yaml
+      when: not docker_installed
+    

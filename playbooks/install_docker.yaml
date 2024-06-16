@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  vars:
+    docker_service_state: started
+    docker_service_enabled: true
+    docker_install_compose: true
+    docker_users:
+      - "azureuser"
+  roles:
+      - role: geerlingguy.docker
+        become: yes
