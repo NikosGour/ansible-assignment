@@ -1,6 +1,5 @@
 ---
 - hosts: backend_hosts
-  become: yes
   pre_tasks:
     
     - name: Check if Docker is installed
@@ -15,4 +14,40 @@
     - name: if Docker is not installed, install it
       include_tasks: install_docker.yaml
       when: not docker_installed
-    
+
+    - name: Copy ssh key
+      ansible.builtin.copy:
+        src: "~/.ssh/id_distributed_systems_rsa"
+        dest: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+      become: no
+
+    - name: Set permissions
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+        mode: "0600"
+      become: no
+
+  tasks:
+      - name: "Clone repo"
+        ansible.builtin.git:
+            repo: "git@github.com:NikosGour/DistributedSystemsFull.git"
+            dest: "{{ app.docker_dir }}"
+            version: main
+            force: yes
+            accept_hostkey: yes
+            key_file: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
+
+      - name: change directory
+        command: "cd {{ app.docker_dir }}"
+      
+      - name: Update git submodules
+        command: "git submodule update --init --recursive"
+      
+      - name: Down previous containers
+        command: "docker compose down"
+      
+      - name: Build containers
+        command: "docker compose build"
+
+      - name: Up containers
+        command: "docker compose up -d"
