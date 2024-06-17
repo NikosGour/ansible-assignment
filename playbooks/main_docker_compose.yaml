@@ -37,17 +37,32 @@
             accept_hostkey: yes
             key_file: "{{ ansible_user_dir }}/.ssh/id_distributed_systems_rsa"
 
-      - name: change directory
-        command: "cd {{ app.docker_dir }}"
-      
       - name: Update git submodules
         command: "git submodule update --init --recursive"
-      
+        args:
+            chdir: "{{ app.docker_dir }}"
+
+      - name: "Make .mvnw executable"
+        file:
+            path: "{{ app.docker_dir }}/backend/mvnw"
+            mode: "u+x"
+
       - name: Down previous containers
         command: "docker compose down"
+        args:
+            chdir: "{{ app.docker_dir }}"
       
+      - name: Run prerun script
+        command: "./prerun.sh"
+        args:
+            chdir: "{{ app.docker_dir }}"
+
       - name: Build containers
         command: "docker compose build"
+        args:
+            chdir: "{{ app.docker_dir }}"
 
       - name: Up containers
         command: "docker compose up -d"
+        args:
+            chdir: "{{ app.docker_dir }}"
